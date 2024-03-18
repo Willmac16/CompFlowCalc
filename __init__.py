@@ -1,15 +1,34 @@
+class IsentropicRatio:
+    def __init__(self, pressure_ratio, temp_ratio, density_ratio):
+        self.pressure_ratio = pressure_ratio
+        self.temp_ratio = temp_ratio
+        self.density_ratio = density_ratio
+
 def isentropic(gamma, mach):
     temp_ratio = 1 + (gamma - 1) / 2 * mach ** 2
 
     pressure_ratio = temp_ratio ** (gamma / (gamma - 1))
     density_ratio = temp_ratio ** (1 / (gamma - 1))
-    return pressure_ratio, temp_ratio, density_ratio
+    return IsentropicRatio(pressure_ratio, temp_ratio, density_ratio)
 
-def press_inverse_isentropic(gamma, pressure_ratio):
+class PressureInverseIsentropicRatio:
+    def __init__(self, temp_ratio, mach):
+        self.temp_ratio = temp_ratio
+        self.mach = mach
+
+def pressure_inverse_isentropic(gamma, pressure_ratio):
     temp_ratio = pressure_ratio ** ((gamma - 1) / gamma)
 
     mach = (2 * (temp_ratio - 1) / (gamma - 1)) ** 0.5
-    return temp_ratio, mach
+    return PressureInverseIsentropicRatio(temp_ratio, mach)
+
+class NormalShockRatio:
+    def __init__(self, pressure_ratio, temp_ratio, density_ratio, stag_ratio, exit_stag_ratio):
+        self.pressure_ratio = pressure_ratio
+        self.temp_ratio = temp_ratio
+        self.density_ratio = density_ratio
+        self.stag_ratio = stag_ratio
+        self.exit_stag_ratio = exit_stag_ratio
 
 def normal_shock(gamma, mach):
     pressure_ratio = (2 * gamma * mach ** 2 - (gamma - 1)) / (gamma + 1)
@@ -18,7 +37,14 @@ def normal_shock(gamma, mach):
 
     stag_ratio = temp_ratio ** (-gamma / (gamma - 1)) * pressure_ratio
 
-    stag_one, _, _ = isentropic(gamma, mach)
+    stag_one = isentropic(gamma, mach).pressure_ratio
     exit_stag_ratio = stag_ratio * stag_one
 
-    return pressure_ratio, temp_ratio, density_ratio, stag_ratio, exit_stag_ratio
+    return NormalShockRatio(pressure_ratio, temp_ratio, density_ratio, stag_ratio, exit_stag_ratio)
+
+if __name__ == "__main__":
+    GAMMA = 1.4
+
+    assert(abs(pressure_inverse_isentropic(GAMMA, isentropic(GAMMA, 2).pressure_ratio).mach - 2.0) < 1e-6)
+
+    print("Pressure ratio of a Mach 2 Normal Shock {:.5f}".format(normal_shock(GAMMA, 2).pressure_ratio))
