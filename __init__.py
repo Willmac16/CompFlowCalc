@@ -42,6 +42,22 @@ def normal_shock(gamma, mach):
 
     return NormalShockRatio(pressure_ratio, temp_ratio, density_ratio, stag_ratio, exit_stag_ratio)
 
+
+class ExpansionWaveRatio:
+    def __init__(self, velocity_ratio, pressure_ratio, temp_ratio, density_ratio):
+        self.velocity_ratio = velocity_ratio
+        self.pressure_ratio = pressure_ratio
+        self.temp_ratio = temp_ratio
+        self.density_ratio = density_ratio
+
+def expansion_wave(gamma, mach):
+    velocity_ratio = 1 / (1 + (gamma - 1) / 2 * mach)
+    pressure_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** (2 * gamma / (gamma - 1))
+    temp_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** 2
+    density_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** (2 / (gamma - 1))
+
+    return ExpansionWaveRatio(velocity_ratio, pressure_ratio, temp_ratio, density_ratio)
+
 if __name__ == "__main__":
     GAMMA = 1.4
 
