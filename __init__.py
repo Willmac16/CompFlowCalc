@@ -1,66 +1,61 @@
+import math
+
 class IsentropicRatio:
-    def __init__(self, pressure_ratio, temp_ratio, density_ratio):
-        self.pressure_ratio = pressure_ratio
-        self.temp_ratio = temp_ratio
-        self.density_ratio = density_ratio
+    def __init__(self, gamma, mach):
+        self.temp_ratio = 1 + (gamma - 1) / 2 * mach ** 2
+
+        self.pressure_ratio = self.temp_ratio ** (gamma / (gamma - 1))
+        self.density_ratio = self.temp_ratio ** (1 / (gamma - 1))
 
 def isentropic(gamma, mach):
-    temp_ratio = 1 + (gamma - 1) / 2 * mach ** 2
-
-    pressure_ratio = temp_ratio ** (gamma / (gamma - 1))
-    density_ratio = temp_ratio ** (1 / (gamma - 1))
-    return IsentropicRatio(pressure_ratio, temp_ratio, density_ratio)
+    return IsentropicRatio(gamma, mach)
 
 class PressureInverseIsentropicRatio:
-    def __init__(self, temp_ratio, mach):
-        self.temp_ratio = temp_ratio
-        self.mach = mach
+    def __init__(self, gamma, pressure_ratio):
+        self.temp_ratio = pressure_ratio ** ((gamma - 1) / gamma)
+        self.mach = (2 * (self.temp_ratio - 1) / (gamma - 1)) ** 0.5
 
 def pressure_inverse_isentropic(gamma, pressure_ratio):
-    temp_ratio = pressure_ratio ** ((gamma - 1) / gamma)
-
-    mach = (2 * (temp_ratio - 1) / (gamma - 1)) ** 0.5
-    return PressureInverseIsentropicRatio(temp_ratio, mach)
+    return PressureInverseIsentropicRatio(gamma, pressure_ratio)
 
 class NormalShockRatio:
-    def __init__(self, pressure_ratio, temp_ratio, density_ratio, stag_ratio, exit_stag_ratio):
-        self.pressure_ratio = pressure_ratio
-        self.temp_ratio = temp_ratio
-        self.density_ratio = density_ratio
-        self.stag_ratio = stag_ratio
-        self.exit_stag_ratio = exit_stag_ratio
+    def __init__(self, gamma, mach):
+        self.pressure_ratio = (2 * gamma * mach ** 2 - (gamma - 1)) / (gamma + 1)
+        self.temp_ratio = (2 * gamma * mach ** 2 - (gamma - 1)) * ((gamma - 1) * mach ** 2 + 2) / ((gamma + 1) ** 2 * mach ** 2)
+        self.density_ratio = (gamma + 1) * mach ** 2 / ((gamma - 1) * mach ** 2 + 2)
+
+        self.stag_ratio = self.temp_ratio ** (-gamma / (gamma - 1)) * self.pressure_ratio
+
+        stag_one = IsentropicRatio(gamma, mach).pressure_ratio
+        self.exit_stag_ratio = self.stag_ratio * stag_one
+        self.mach_two = ((1 + (gamma - 1) / 2 * mach ** 2) / (gamma * mach ** 2 - (gamma - 1) / 2)) ** 0.5
 
 def normal_shock(gamma, mach):
-    pressure_ratio = (2 * gamma * mach ** 2 - (gamma - 1)) / (gamma + 1)
-    temp_ratio = (2 * gamma * mach ** 2 - (gamma - 1)) * ((gamma - 1) * mach ** 2 + 2) / ((gamma + 1) ** 2 * mach ** 2)
-    density_ratio = (gamma + 1) * mach ** 2 / ((gamma - 1) * mach ** 2 + 2)
-
-    stag_ratio = temp_ratio ** (-gamma / (gamma - 1)) * pressure_ratio
-
-    stag_one = isentropic(gamma, mach).pressure_ratio
-    exit_stag_ratio = stag_ratio * stag_one
-
-    return NormalShockRatio(pressure_ratio, temp_ratio, density_ratio, stag_ratio, exit_stag_ratio)
+    return NormalShockRatio(gamma, mach)
 
 
 class ExpansionWaveRatio:
-    def __init__(self, velocity_ratio, pressure_ratio, temp_ratio, density_ratio):
-        self.velocity_ratio = velocity_ratio
-        self.pressure_ratio = pressure_ratio
-        self.temp_ratio = temp_ratio
-        self.density_ratio = density_ratio
+    def __init__(self, gamma, mach):
+        self.velocity_ratio = 1 / (1 + (gamma - 1) / 2 * mach)
+        self.pressure_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** (2 * gamma / (gamma - 1))
+        self.temp_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** 2
+        self.density_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** (2 / (gamma - 1))
 
 def expansion_wave(gamma, mach):
-    velocity_ratio = 1 / (1 + (gamma - 1) / 2 * mach)
-    pressure_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** (2 * gamma / (gamma - 1))
-    temp_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** 2
-    density_ratio = 1 / (1 + (gamma - 1) / 2 * mach) ** (2 / (gamma - 1))
+    return ExpansionWaveRatio(gamma, mach)
 
-    return ExpansionWaveRatio(velocity_ratio, pressure_ratio, temp_ratio, density_ratio)
+class ObliqueShockResult:
+    def __init__(self, gamma, mach_one, beta):
+        self.theta = math.atan(2 / math.tan(beta) * (mach_one ** 2 * math.sin(beta) ** 2 - 1) / (mach_one ** 2 * (gamma + math.cos(2 * beta)) + 2))
+        mach_one_normal = mach_one * math.sin(beta)
+
+        self.shock_ratio: NormalShockRatio = NormalShockRatio(gamma, mach_one_normal)
+        mach_two_normal = self.shock_ratio.mach_two
+        self.mach_two = mach_two_normal / math.sin(self.theta - beta)
 
 if __name__ == "__main__":
     GAMMA = 1.4
 
-    assert(abs(pressure_inverse_isentropic(GAMMA, isentropic(GAMMA, 2).pressure_ratio).mach - 2.0) < 1e-6)
+    assert abs(pressure_inverse_isentropic(GAMMA, isentropic(GAMMA, 2).pressure_ratio).mach - 2.0) < 1e-6
 
-    print("Pressure ratio of a Mach 2 Normal Shock {:.5f}".format(normal_shock(GAMMA, 2).pressure_ratio))
+    print(f"Pressure ratio of a Mach 2 Normal Shock {normal_shock(GAMMA, 2).pressure_ratio:.5f}")
