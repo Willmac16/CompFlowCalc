@@ -9,7 +9,7 @@ class IsentropicRatio:
 
         self.pressure_ratio = self.temp_ratio ** (gamma / (gamma - 1))
         self.density_ratio = self.temp_ratio ** (1 / (gamma - 1))
-        self.mu = math.asin(1 / mach)
+        # self.mu = math.asin(1 / mach)
 
 def isentropic(gamma, mach):
     return IsentropicRatio(gamma, mach)
@@ -94,7 +94,7 @@ class ObliqueShock:
 
         self.shock_ratio: NormalShockRatio = NormalShockRatio(gamma, mach_one_normal)
         mach_two_normal = self.shock_ratio.mach_two
-        self.mach_two = mach_two_normal / math.sin(theta - beta)
+        self.mach_two = mach_two_normal / math.sin(beta - theta)
 
 
 def prandtlMeyerNu(gamma, mach):
