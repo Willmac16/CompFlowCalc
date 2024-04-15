@@ -73,8 +73,8 @@ class ThetaBetaMach:
 
             self.beta = root_scalar(lambda beta:
                                     tbm_implicit(gamma, theta, beta, mach),
-                                    x0=7/9 * math.pi / 4,
-                                    bracket=[1e-6, math.pi / 4],
+                                    x0=0.25,
+                                    bracket=[1e-6, math.pi / 2],
                                     method='brentq').root
     def __str__(self):
         return f"Theta: {self.theta:4f}\nBeta:  {self.beta:4f}\nMach:  {self.mach:4f}"
