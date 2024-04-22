@@ -12,6 +12,12 @@ class IsentropicRatio:
         self.density_ratio = self.temp_ratio ** (1 / (gamma - 1))
         # self.mu = math.asin(1 / mach)
 
+    def __str__(self):
+        return f"Pressure Ratio: {self.pressure_ratio:.5f}\nTemp Ratio: {self.temp_ratio:.5f}\nDensity Ratio: {self.density_ratio:.5f}"
+
+    def __repr__(self):
+        return self.__str__()
+
 
 def isentropic(gamma, mach):
     return IsentropicRatio(gamma, mach)
@@ -42,10 +48,16 @@ class NormalShockRatio:
         )
 
         stag_one = IsentropicRatio(gamma, mach).pressure_ratio
-        self.exit_stag_ratio = self.stag_ratio * stag_one
+        self.exit_stag_ratio = self.stag_ratio / stag_one
         self.mach_two = (
             (1 + (gamma - 1) / 2 * mach**2) / (gamma * mach**2 - (gamma - 1) / 2)
         ) ** 0.5
+
+    def __str__(self):
+        return f"Pressure Ratio: {self.pressure_ratio:.5f}\nTemp Ratio: {self.temp_ratio:.5f}\nDensity Ratio: {self.density_ratio:.5f}\nStag Ratio: {self.stag_ratio:.5f}\nExit Stag Ratio: {self.exit_stag_ratio:.5f}\nMach 2: {self.mach_two:.5f}"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 def normal_shock(gamma, mach):
@@ -174,15 +186,37 @@ class PrandtlMeyer:
         return self.__str__()
 
 
+def ar_explicit(gamma, mach):
+    return (
+        1
+        / mach
+        * (2 / (gamma + 1) * (1 + (gamma - 1) / 2 * mach**2))
+        ** ((gamma + 1) / (2 * (gamma - 1)))
+    )
+
+
 # A / A (star)
 class AreaRatio:
-    def __init__(self, gamma, mach):
-        self.area_ratio = (
-            1
-            / mach
-            * (2 / (gamma + 1) * (1 + (gamma - 1) / 2 * mach**2))
-            ** ((gamma + 1) / (2 * (gamma - 1)))
-        )
+    def __init__(self, gamma, mach=math.nan, area_ratio=math.nan, super_sonic=False):
+        sub_bracket = [1e-6, 1]
+        super_bracket = [1 + 1e-6, 1e6]
+
+        if not math.isnan(mach):
+            self.mach = mach
+            self.area_ratio = ar_explicit(gamma, mach)
+        elif not math.isnan(area_ratio):
+            self.area_ratio = area_ratio
+            self.mach = root_scalar(
+                lambda mach: ar_explicit(gamma, mach) - area_ratio,
+                bracket=super_bracket if super_sonic else sub_bracket,
+                method="brentq",
+            ).root
+
+    def __str__(self):
+        return f"Mach: {self.mach:4f}\nArea Ratio:  {self.area_ratio:4f}"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 if __name__ == "__main__":
