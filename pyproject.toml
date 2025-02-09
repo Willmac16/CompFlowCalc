@@ -1,5 +1,5 @@
 [project]
-name = "compressible_flow_calculator_Willmac16"
+name = "compressible_flow_calculator"
 version = "0.0.1"
 authors = [
   { name="Will MacCormack", email="me@willmac.xyz" },
@@ -26,6 +26,3 @@ Issues = "https://github.com/Willmac16/CompFlowCalc/issues"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
