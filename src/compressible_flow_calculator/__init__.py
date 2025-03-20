@@ -201,10 +201,10 @@ class AreaRatio:
         sub_bracket = [1e-6, 1]
         super_bracket = [1 + 1e-6, 1e6]
 
-        if not math.isnan(mach):
+        if not np.isnan(mach).all():
             self.mach = mach
             self.area_ratio = ar_explicit(gamma, mach)
-        elif not math.isnan(area_ratio):
+        elif not np.isnan(area_ratio).all(0:
             self.area_ratio = area_ratio
             self.mach = root_scalar(
                 lambda mach: ar_explicit(gamma, mach) - area_ratio,
