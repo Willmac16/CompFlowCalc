@@ -198,19 +198,17 @@ def ar_explicit(gamma, mach):
 # A / A (star)
 class AreaRatio:
     def __init__(self, gamma, mach=math.nan, area_ratio=math.nan, super_sonic=False):
-        sub_bracket = [1e-6, 1]
-        super_bracket = [1 + 1e-6, 1e6]
-
         if not np.isnan(mach).all():
             self.mach = mach
             self.area_ratio = ar_explicit(gamma, mach)
-        elif not np.isnan(area_ratio).all(0:
+        elif not np.isnan(area_ratio).all():
+            sub_bracket = (1e-6 * np.ones(area_ratio.shape), 1 * np.ones(area_ratio.shape))
+            super_bracket = ((1 + 1e-6) * np.ones(area_ratio.shape), 1e6 * np.ones(area_ratio.shape))
+
             self.area_ratio = area_ratio
-            self.mach = root_scalar(
-                lambda mach: ar_explicit(gamma, mach) - area_ratio,
-                bracket=super_bracket if super_sonic else sub_bracket,
-                method="brentq",
-            ).root
+            self.mach = scipy.optimize.elementwise.find_root(
+              lambda mach, gamma, area_ratio: ar_explicit(gamma, mach) - area_ratio,
+              super_bracket if super_sonic else sub_bracket, args=(1.4, area_ratio)).x
 
     def __str__(self):
         return f"Mach: {self.mach:4f}\nArea Ratio:  {self.area_ratio:4f}"
